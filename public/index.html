@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123d32">
+  <title>Four-Card Golf</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">A little luck. A good memory.</p>
+      <h1>Four-Card Golf</h1>
+    </div>
+    <p id="connection-status" role="status">Connecting…</p>
+  </header>
+
+  <main>
+    <p id="error-message" class="error" role="alert" hidden></p>
+
+    <section id="home-screen" aria-labelledby="home-title">
+      <h2 id="home-title">Bring your friends to the table</h2>
+      <p>Play with 2–4 people. No accounts needed. The lowest score wins.</p>
+      <div class="home-panels">
+        <form id="create-form" class="panel">
+          <h3>Create a room</h3>
+          <label for="create-name">Your display name</label>
+          <input id="create-name" name="name" autocomplete="nickname" maxlength="24" required>
+
+          <label for="max-players">Number of players</label>
+          <select id="max-players" name="maxPlayers">
+            <option value="2">2 players</option>
+            <option value="3">3 players</option>
+            <option value="4">4 players</option>
+          </select>
+
+          <label for="round-count">Number of rounds</label>
+          <input id="round-count" name="rounds" type="number" min="1" max="20" value="3" required>
+          <button type="submit" disabled>Create room</button>
+        </form>
+
+        <form id="join-form" class="panel">
+          <h3>Join a room</h3>
+          <label for="join-name">Your display name</label>
+          <input id="join-name" name="name" autocomplete="nickname" maxlength="24" required>
+
+          <label for="join-code">Room code</label>
+          <input id="join-code" name="roomCode" maxlength="6" minlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" required>
+          <p class="hint">Ask the room creator for their six-character code.</p>
+          <button type="submit" disabled>Join room</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="room-screen" aria-labelledby="room-title" hidden>
+      <div class="room-header">
+        <div>
+          <h2 id="room-title">Your table</h2>
+          <p>Room <strong id="room-code"></strong></p>
+        </div>
+        <button id="copy-code" type="button">Copy room code</button>
+      </div>
+
+      <section id="lobby-panel" class="panel" aria-labelledby="lobby-title">
+        <h3 id="lobby-title">Waiting for players</h3>
+        <p id="lobby-summary"></p>
+        <ul id="lobby-players"></ul>
+        <p id="lobby-message" role="status"></p>
+        <button id="start-game" type="button" hidden>Start game</button>
+      </section>
+
+      <section id="game-panel" aria-labelledby="game-title" hidden>
+        <h3 id="game-title">Round <span id="round-number"></span></h3>
+        <p id="turn-message" role="status" aria-live="polite"></p>
+        <p id="final-turn-message" class="notice" hidden></p>
+
+        <div id="peek-panel" class="panel" hidden>
+          <p id="peek-message"></p>
+          <button id="peek-cards" type="button">Look at my bottom two cards</button>
+          <button id="finish-peek" type="button" hidden>Hide cards — I’m ready</button>
+        </div>
+
+        <div class="piles" aria-label="Card piles">
+          <div class="pile">
+            <h4>Stock</h4>
+            <button id="draw-stock" class="card card-back" type="button" disabled aria-label="Draw a card from the stockpile">Draw</button>
+            <p><span id="stock-count">0</span> cards</p>
+          </div>
+          <div class="pile">
+            <h4>Discard</h4>
+            <button id="draw-discard" class="card" type="button" disabled aria-label="Take the top discard">Empty</button>
+            <p>Swap into your hand</p>
+          </div>
+          <div id="drawn-panel" class="pile" hidden>
+            <h4>Drawn card</h4>
+            <div id="drawn-card" class="card"></div>
+            <p id="drawn-source"></p>
+          </div>
+        </div>
+
+        <div id="move-controls" class="panel" hidden>
+          <p id="move-message">Choose what to do with your drawn card, then choose a card in your grid.</p>
+          <div class="move-options" role="group" aria-label="Choose a move">
+            <button id="choose-swap" type="button" aria-pressed="true">Swap into my hand</button>
+            <button id="choose-flip" type="button" aria-pressed="false">Discard it and flip a hidden card</button>
+          </div>
+        </div>
+
+        <section class="player-panel" aria-labelledby="my-hand-title">
+          <h4 id="my-hand-title">Your cards</h4>
+          <p id="hand-hint">Top row above, bottom row below. Matching ranks in a column score zero.</p>
+          <div id="my-hand" class="card-grid" aria-describedby="hand-hint"></div>
+        </section>
+
+        <section aria-labelledby="opponents-title">
+          <h4 id="opponents-title">Around the table</h4>
+          <div id="opponents" class="opponents"></div>
+        </section>
+      </section>
+
+      <section id="results-panel" class="panel" aria-labelledby="results-title" hidden>
+        <h3 id="results-title">Round results</h3>
+        <p id="round-winners"></p>
+        <p id="overall-leaders"></p>
+        <div class="table-wrap">
+          <table>
+            <caption>Scores — lowest wins</caption>
+            <thead><tr><th scope="col">Player</th><th scope="col">This round</th><th scope="col">Total</th></tr></thead>
+            <tbody id="score-rows"></tbody>
+          </table>
+        </div>
+        <p id="results-message" role="status"></p>
+        <button id="next-round" type="button" hidden>Start next round</button>
+        <button id="new-game" type="button" hidden>Return home</button>
+      </section>
+    </section>
+
+    <details id="rules" class="panel rules">
+      <summary>How to play</summary>
+      <p>Keep the total value of your four cards as low as possible.</p>
+      <ol>
+        <li>At the start of each round, look once at your bottom two cards. Memorize them and hide them again. Play begins when everyone is ready.</li>
+        <li>On your turn, draw from the stock or take the top discard. The drawn card is revealed to everyone.</li>
+        <li>A stock card can replace any card in your grid, face up. The replaced card goes to the discard pile. Or discard the drawn card and flip one of your hidden cards instead.</li>
+        <li>A card taken from the discard must replace a card in your grid, face up. You may replace a hidden or revealed card.</li>
+        <li>When someone finishes a turn with all four cards face up, everyone else gets one final turn. Then all hands are revealed and scored.</li>
+      </ol>
+      <p><strong>Card values:</strong> A = −1; 2–10 = their number; J and Q = 10; K = 0.</p>
+      <p><strong>Column pairs:</strong> Two cards with the same rank in the same vertical column score zero together. Suits do not matter. Horizontal and diagonal pairs do not cancel.</p>
+      <p><strong>Winning:</strong> The lowest score wins each round. Scores add up across rounds; the lowest total after the chosen number of rounds wins. Ties share the win.</p>
+      <p>If the stock runs out, the discards are shuffled into a new stock, keeping the top discard. The starting player rotates each round.</p>
+      <p>Refresh in the same browser to reconnect. A disconnected player keeps their seat and turn while they reconnect. Rooms are cleared when the server restarts.</p>
+    </details>
+  </main>
+
+  <footer>Four cards. Lowest score. Good company.</footer>
+</body>
+</html>
